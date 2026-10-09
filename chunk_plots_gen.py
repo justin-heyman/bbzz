@@ -136,6 +136,8 @@ def parse_args():
     parser.add_argument("-s", "--step-size", type=str, default="50MB", help="Chunk size for streaming")
     parser.add_argument("--gen-all-events", action="store_true",
                         help="Fill LHE/GenPart plots for all events instead of only Dilepton_ok == 1 events")
+    parser.add_argument("--min-jets", type=int, default=2,
+                        help="Require nGoodJet >= this many jets (default 2; 0 disables the cut)")
     return parser.parse_args()
 
 
@@ -465,7 +467,7 @@ def main():
         "Dilepton_ok", "Dilepton_channel", "Dilepton_mLL", "Dilepton_ptLL", "Dilepton_etaLL", "Dilepton_phiLL",
         "Dilepton_dRLL", "Dilepton_dPhiLL", "PuppiMET_pt", "PuppiMET_phi",
         "GoodLepton_pt", "GoodLepton_eta", "GoodLepton_phi",
-        "GoodJet_pt", "GoodJet_eta", "GoodJet_phi", "GoodJet_mass", "genWeight",
+        "nGoodJet", "GoodJet_pt", "GoodJet_eta", "GoodJet_phi", "GoodJet_mass", "genWeight",
         # LHE
         "LHE_HT", "LHE_HTIncoming", "LHE_Njets",
         "LHEPart_pt", "LHEPart_eta", "LHEPart_phi", "LHEPart_mass", "LHEPart_pdgId", "LHEPart_status",
@@ -487,6 +489,14 @@ def main():
             good_ll_mask = ak.to_numpy(chunk["Dilepton_ok"]) == 1
         else:
             good_ll_mask = np.ones(chunk_size, dtype=bool)
+
+        # Jet multiplicity cut (applies to reco plots, and to truth plots unless --gen-all-events)
+        if args.min_jets > 0:
+            if "nGoodJet" in chunk.fields:
+                n_jets = ak.to_numpy(chunk["nGoodJet"])
+            else:
+                n_jets = ak.to_numpy(ak.num(chunk["GoodJet_pt"], axis=1))
+            good_ll_mask = good_ll_mask & (n_jets >= args.min_jets)
 
         if "Dilepton_channel" in chunk.fields:
             all_chans = ak.to_numpy(chunk["Dilepton_channel"])
@@ -613,7 +623,8 @@ def main():
 
         gc.collect()
 
-    print(f"Filtering: Keeping {kept_events} / {total_events} events with valid Dilepton candidates.")
+    print(f"Filtering: Keeping {kept_events} / {total_events} events with valid Dilepton candidates"
+          f"{f' and nGoodJet >= {args.min_jets}' if args.min_jets > 0 else ''}.")
     for ch_name, ch_code, _ in CHANNELS:
         if ch_code is not None:
             print(f"  {ch_name:>5}: {kept_per_channel[ch_name]} events")
