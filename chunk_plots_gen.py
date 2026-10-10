@@ -129,11 +129,11 @@ FLAG_IS_LAST_COPY = 13
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Plot ROOT kinematics with precise ROOT-style formatting.")
-    parser.add_argument("-i", "--input", type=str, nargs="+", default=["output/dilepton_GluGlutoHHto2B2Vto2L2Nu.root"],
+    parser.add_argument("-i", "--input", type=str, nargs="+", default=["output/twolepton_GluGlutoHHto2B2Vto2L2Nu.root"],
                         help="Input ROOT file(s); several files or a shell glob are combined into one set of plots")
     parser.add_argument("-t", "--tree", type=str, default="Events", help="TTree name inside ROOT file")
     parser.add_argument("-o", "--outdir", type=str, default="plots/bb2l2nu", help="Output directory")
-    parser.add_argument("-s", "--step-size", type=str, default="50MB", help="Chunk size for streaming")
+    parser.add_argument("-s", "--step-size", type=str, default="100MB", help="Chunk size for streaming")
     parser.add_argument("--gen-all-events", action="store_true",
                         help="Fill LHE/GenPart plots for all events instead of only Dilepton_ok == 1 events")
     parser.add_argument("--min-jets", type=int, default=2,
